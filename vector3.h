@@ -2,16 +2,24 @@
 // Created by Alexis on 29/01/2020.
 //
 
-#ifndef __GEOMETRY_H__
-#define __GEOMETRY_H__
+#ifndef __VECTOR3_H__
+#define __VECTOR3_H__
 
 #include <cmath>
 #include <vector>
 #include <cassert>
-#include <iostream
+#include <iostream>
+
+
+template <size_t DIM, typename T> struct vec {
+    vec() { for (size_t i=DIM; i--; data_[i] = T()); }
+    T& operator[](const size_t i)       { assert(i<DIM); return data_[i]; }
+    const T& operator[](const size_t i) const { assert(i<DIM); return data_[i]; }
+private:
+    T data_[DIM];
+};
 
 typedef vec<3, float> Vec3f;
-
 
 template <typename T> struct vec<3,T> {
     vec() : x(T()), y(T()), z(T()) {}
@@ -22,3 +30,5 @@ template <typename T> struct vec<3,T> {
     vec<3,T> & normalize(T l=1) { *this = (*this)*(l/norm()); return *this; }
     T x,y,z;
 };
+
+#endif

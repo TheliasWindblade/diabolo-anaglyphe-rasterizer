@@ -22,7 +22,7 @@ void render() {
 #pragma omp parallel for
     for (size_t j = 0; j<height; j++) { // actual rendering loop
         for (size_t i = 0; i<width; i++) {
-            std::cout << "Color" << std::endl;
+            std::cout << fov << std::endl;
         }
     }
 

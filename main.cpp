@@ -13,8 +13,8 @@
 #include "model.h"
 #include "image.h"
 
-const int   width    = 1024;
-const int   height   = 768;
+const int   width    = 800;
+const int   height   = 800;
 Model* model=NULL;
 
 /**
@@ -48,10 +48,8 @@ void line(int x0, int y0, int x1, int y1, Image *image, Vec3f color){
  */
 void render() {
   Image* framebuffer = new Image(width,height);
-  model->print();
   
   //Render the model.
-  std::cout << model;
   for(int f=0;f<model->nfaces();f++){
     std::vector<int> face = model->getFaceVertexes(f);
     for(int i=0;i<3;i++){

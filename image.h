@@ -4,6 +4,10 @@
 #include "vector3.h"
 #include <vector>
 
+/**
+ * Class defining an image to render stuff on.
+ */
+
 class Image{
  public:
   Image(int width, int height);
@@ -13,6 +17,7 @@ class Image{
   int width();
   int height();
  private:
+  int CoordsToFramebuffer(int x, int y);
   int width_,height_;
   std::vector<Vec3f> framebuffer_;
 };

@@ -7,10 +7,8 @@
 Model::Model(const char *filename) : vertices_(), faces_() {
   std::ifstream in;
   std::string line;
-  std::cout << "loading" << std::endl;
   in.open(filename, std::ifstream::in);
   if(in.fail()) return;
-  std::cout << "loaded" << std::endl;
   while(!in.eof()){
     std::getline(in,line);
     std::istringstream iss(line.c_str());

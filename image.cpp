@@ -38,3 +38,4 @@ int Image::saveAsPPM(){
 }
 
 int Image::CoordsToFramebuffer(int x, int y){return x+y*width();}
+

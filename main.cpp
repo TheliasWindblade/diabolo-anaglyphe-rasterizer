@@ -18,6 +18,15 @@ const int   height   = 800;
 Model* model=NULL;
 
 /**
+ * Transform .obj coordinates [-1,1] into discrete image coordinates [0,width|height]
+ */
+Vec2i CObjToImage(float x, float y){
+  int x0 = (x+1.)*width/2.;
+  int y0 = (y+1.)*height/2.;
+  return Vec2i(x0,y0);
+}
+
+/**
  * Draw a line between (x0,y0) and (x1,y1). Who could've guessed.
  */
 void line(Vec2i p0, Vec2i p1, Image *image, Vec3f color){
@@ -46,7 +55,7 @@ void line(Vec2i p0, Vec2i p1, Image *image, Vec3f color){
 }
 
 /**
- * Draw a triangle. With 3 lines.
+ * Draw a triangle, filled with given color.
  */
 void triangle(Vec2i p0, Vec2i p1, Vec2i p2, Image *image, Vec3f color){
   if(p0.y > p1.y) std::swap(p0,p1);
@@ -61,9 +70,7 @@ void triangle(Vec2i p0, Vec2i p1, Vec2i p2, Image *image, Vec3f color){
     Vec2i A = p0 + (p2-p0) * alpha;
     Vec2i B = (lowerHalf ? p0 + (p1-p0) * beta : p1 + (p2-p1) * beta);
     A.y=p0.y+y;
-    line(A,B,image,Vec3f(0.7,0.5,1));
-    image->setPixel(A,Vec3f(0,1,0));
-    image->setPixel(B,Vec3f(1,0,0));
+    line(A,B,image,color);
   }
   line(p0,p1,image,Vec3f(0.6,0.6,0.6));
   line(p2,p1,image,Vec3f(0.6,0.6,0.6));
@@ -75,25 +82,27 @@ void triangle(Vec2i p0, Vec2i p1, Vec2i p2, Image *image, Vec3f color){
  */
 void render() {
   Image* framebuffer = new Image(width,height);
-  
-  //Render the model.
+
+  //Render the model
   for(int f=0;f<model->nfaces();f++){
+    std::vector<int> face = model->getFaceVertexes(f);
+    Vec3f v0 = model->getVertex(face[0]);
+    Vec3f v1 = model->getVertex(face[1]);
+    Vec3f v2 = model->getVertex(face[2]);
+    triangle(CObjToImage(v0.x,v0.y),CObjToImage(v1.x,v1.y),CObjToImage(v2.x,v2.y),framebuffer,Vec3f(1,1,1));
+  }
+  //Render the model in wireframe.
+  /*for(int f=0;f<model->nfaces();f++){
     std::vector<int> face = model->getFaceVertexes(f);
     for(int i=0;i<3;i++){
       Vec3f v0 = model->getVertex(face[i]);
       Vec3f v1 = model->getVertex(face[(i+1)%3]);
-      int x0 = (v0.x+1.)*width/2.;
-      int y0 = (v0.y+1.)*height/2.;
-      Vec2i p0(x0,y0);
-      int x1 = (v1.x+1.)*width/2.;
-      int y1 = (v1.y+1.)*height/2.;
-      Vec2i p1(x1,y1);
-      line(p0,p1,framebuffer,Vec3f(1,0,1));
+      line(CObjToImage(v0.x,v0.y),CObjToImage(v1.x,v1.y),framebuffer,Vec3f(1,0,1));
     }
-  }
+    }*/
 
   //Test renders
-  triangle(Vec2i(180,50),Vec2i(150,1),Vec2i(70,180),framebuffer,Vec3f(1,0.5,0.5));
+  //triangle(Vec2i(180,50),Vec2i(150,1),Vec2i(70,180),framebuffer,Vec3f(1,0.5,0.5));
 
   //Save the image.
   framebuffer->saveAsPPM();

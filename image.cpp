@@ -4,6 +4,7 @@
 
 Image::Image(int width, int height) : width_(width),height_(height),framebuffer_(width*height) {}
 Vec3f Image::getPixel(int x, int y) { return framebuffer_[CoordsToFramebuffer(x,y)];}
+Vec3f Image::getPixel(Vec2i vec) { return getPixel(vec.x,vec.y);}
 
 int Image::setPixel(int x, int y, Vec3f color){
   if(x>=0 && x<width() && y>=0 && y<height()){
@@ -12,6 +13,8 @@ int Image::setPixel(int x, int y, Vec3f color){
   }
   return -1;
 }
+
+int Image::setPixel(Vec2i vec, Vec3f color){return setPixel(vec.x,vec.y,color);}
 
 int Image::width() {return width_;}
 int Image::height() {return height_;}

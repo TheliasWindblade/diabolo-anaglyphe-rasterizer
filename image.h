@@ -1,7 +1,7 @@
 #ifndef IMAGE_H_DEFINED
 #define IMAGE_H_DEFINED
 
-#include "vector3.h"
+#include "vectors.h"
 #include <vector>
 
 /**
@@ -12,6 +12,8 @@ class Image{
  public:
   Image(int width, int height);
   Vec3f getPixel(int x, int y);
+  Vec3f getPixel(Vec2i vec);
+  int setPixel(Vec2i vec, Vec3f color);
   int setPixel(int x, int y, Vec3f color);
   int saveAsPPM();
   int width();

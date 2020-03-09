@@ -120,17 +120,19 @@ void render() {
   //Render the model
   for(int f=0;f<model->nfaces();f++){
     std::vector<int> face = model->getFaceVertexes(f);
-    Vec3f world_coords[3];
     Vec2i screen_coords[3];
+    Vec3f world_coords[3];
     for(int i=0;i<3;i++){
-      world_coords[i]=model->getVertex(face[i]);
-      screen_coords[i]=CObjToImage(world_coords[i]);
+      Vec3f v = model->getVertex(face[i]);
+      screen_coords[i] = Vec2i((v.x+1.)*width/2.,(v.y+1)*width/2.);
+      world_coords[i]=v;
     }
     Vec3f n = cross(world_coords[2]-world_coords[0],world_coords[1]-world_coords[0]);
     n.normalize();
     float intensity = n*light_dir;
     if(intensity<=0) continue;
-    triangle(screen_coords[0],screen_coords[1],screen_coords[2],framebuffer,Vec3f(1*intensity,1*intensity,1*intensity));
+    Vec3f color(((rand()%255)*intensity)/255.,((rand()%255)*intensity)/255.,((rand()%255)*intensity)/255.);
+    triangle(screen_coords[0],screen_coords[1],screen_coords[2],framebuffer,color);
   }
 
   //Test renders

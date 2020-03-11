@@ -15,7 +15,7 @@ class Image{
   Vec3f getPixel(Vec2i vec);
   int setPixel(Vec2i vec, Vec3f color);
   int setPixel(int x, int y, Vec3f color);
-  int saveAsPPM();
+  int saveAsPPM(const char *filename);
   int width();
   int height();
   void flip_vert();

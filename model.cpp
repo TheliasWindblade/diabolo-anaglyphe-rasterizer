@@ -30,6 +30,7 @@ Model::Model(const char *filename) : vertices_(), faces_() {
       faces_.push_back(f);
     }
   }
+  std::cerr << "## vertices : " << vertices_.size() << " ## faces : " << faces_.size() << " ##" << std::endl;
 }
 
 int Model::nverts(){

@@ -25,10 +25,10 @@ int Image::setPixel(Vec2i vec, Vec3f color){return setPixel(vec.x,vec.y,color);}
 int Image::width() {return width_;}
 int Image::height() {return height_;}
 
-int Image::saveAsPPM(){
+int Image::saveAsPPM(const char* filename){
   flip_vert();
   std::ofstream ofs; // save the framebuffer to file
-  ofs.open("./out.ppm",std::ios::binary);
+  ofs.open(filename,std::ios::binary);
   ofs << "P6\n" << width() << " " << height() << "\n255\n";
   for (int y = 0 ; y < height() ; y++) {
     for(int x = 0 ; x < width() ; x++){

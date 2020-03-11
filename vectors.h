@@ -23,6 +23,8 @@ private:
 };
 
 typedef vec<3, float> Vec3f;
+typedef vec<2, float> Vec2f;
+typedef vec<3, int> Vec3i;
 typedef vec<2, int> Vec2i;
 
 template <typename T> struct vec<3,T> {
@@ -92,6 +94,7 @@ private:
 };
 
 typedef polygon<3,Vec2i> Triangle2i;
+typedef polygon<3,Vec3f> Triangle3f;
 
 template <typename K> struct polygon<3,K> {
   polygon() : v0(K()), v1(K()), v2(K()) {}
@@ -101,7 +104,7 @@ template <typename K> struct polygon<3,K> {
   Vec3f barycentric(K p) {
     Vec3f c = cross(Vec3f(v2.x-v0.x,v1.x-v0.x,v0.x-p.x),Vec3f(v2.y-v0.y,v1.y-v0.y,v0.y-p.y));
     if(std::abs(c.z)<1) return Vec3f(-1,1,1); //Return negative coordinates if triangle is degenerate
-    return Vec3f(1.-(c.x+c.y)/c.z,c.y/c.z,c.x/c.z);
+    return Vec3f(1.f-(c.x+c.y)/c.z,c.y/c.z,c.x/c.z);
   }
   K v0,v1,v2;
 };

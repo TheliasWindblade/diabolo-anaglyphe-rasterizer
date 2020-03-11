@@ -23,7 +23,8 @@ Model* model=NULL;
 Vec3f CObjToImage(Vec3f v){
   int x0 = ((v.x+1.)*width/2.+.5);
   int y0 = ((v.y+1.)*height/2.+.5);
-  return Vec3f(x0,y0,v.z);
+  float z0 = (v.z+1.)/2;
+  return Vec3f(x0,y0,z0);
 }
 
 /**
@@ -90,7 +91,7 @@ void bayesian_triangle(Triangle3f tri, Image *image, float *zbuffer, Vec3f color
       if(bc.x<0||bc.y<0||bc.z<0) continue;
       v.z=0;
       for(int i=0;i<3;i++) { v.z += tri[i].z*bc[i]; }
-      if(zbuffer[CImageToZBuffer(v)]<v.z||1){
+      if(zbuffer[CImageToZBuffer(v)]<v.z){
 	zbuffer[CImageToZBuffer(v)]=v.z;
 	image->setPixel(v.x,v.y,color);
       }

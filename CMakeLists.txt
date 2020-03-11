@@ -23,6 +23,7 @@ enable_cxx_compiler_flag_if_supported("-fopenmp")
 enable_cxx_compiler_flag_if_supported("-g")
 
 file(GLOB SOURCES *.h *.cpp)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/diablo3_pose.obj DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/obj)
+file(GLOB OBJECTS *.obj)
+file(COPY ${OBJECTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/obj)
 
 add_executable(${PROJECT_NAME} ${SOURCES})

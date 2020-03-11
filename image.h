@@ -18,10 +18,11 @@ class Image{
   int saveAsPPM();
   int width();
   int height();
+  void flip_vert();
  private:
   int CoordsToFramebuffer(int x, int y);
   int width_,height_;
-  std::vector<Vec3f> framebuffer_;
+  Vec3f* framebuffer_;
 };
 
 #endif 

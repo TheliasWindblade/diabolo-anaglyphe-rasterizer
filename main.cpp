@@ -15,7 +15,15 @@
 
 const int   width    = 800;
 const int   height   = 800;
+const float sqt = 1.73;
+const float pi = 3.14;
 Model* model=NULL;
+
+Vec3f HSVToRGB(Vec3f color){
+  float x = color.y*std::cos(color.x);
+  float y = color.y*std::sin(color.x);
+  return Vec3f(x*2./3+color.z,-x*1./3+y*1/sqt+color.z,-x*1./3-y*1./sqt+color.z);
+}
 
 /**
  * Transform .obj coordinates [-1,1] into discrete image coordinates [0,width|height]
@@ -28,7 +36,7 @@ Vec3f CObjToImage(Vec3f v){
 }
 
 /**
- * Convert image coordinates[0,width|height] to 1D framebuffer coordinates [0,width*height]
+ * Convert 2D image coordinates[0,width|height] to 1D framebuffer coordinates [0,width*height]
  */
 int CImageToZBuffer(int x, int y){
   return x*height+y;
@@ -151,7 +159,7 @@ void render() {
     n.normalize();
     float intensity = n*light_dir;
     if(intensity<=0) continue;
-    Vec3f color((128+(rand()%128)*intensity)/255.,(128+(rand()%128)*intensity)/255.,(128+(rand()%128)*intensity)/255.);
+    Vec3f color = HSVToRGB(Vec3f(((rand()%255)/255.)*2.*pi,0.5+(rand()%16)/32.,0.25));
     //color=Vec3f(intensity,intensity,intensity);
     Triangle3f tri(screen_coords[0],screen_coords[1],screen_coords[2]);
     bayesian_triangle(tri,framebuffer,zbuffer,color);

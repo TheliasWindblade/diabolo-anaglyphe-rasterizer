@@ -11,7 +11,7 @@
 #include <algorithm>
 #include "vectors.h"
 #include "model.h"
-#include "image.h"
+#include "tgaimage.h"
 
 const int   width    = 800;
 const int   height   = 800;
@@ -19,10 +19,13 @@ const float sqt = 1.73;
 const float pi = 3.14;
 Model* model=NULL;
 
-Vec3f HSVToRGB(Vec3f color){
-  float x = color.y*std::cos(color.x);
-  float y = color.y*std::sin(color.x);
-  return Vec3f(x*2./3+color.z,-x*1./3+y*1/sqt+color.z,-x*1./3-y*1./sqt+color.z);
+/**
+ * Return a TGAColor from a Vec3f describing a color in the HSV system.
+ */
+TGAColor HSVToRGB(TGAColor color){
+  float x = color[1]*std::cos(color[0]);
+  float y = color[1]*std::sin(color[0]);
+  return TGAColor(x*2./3+color[2],-x*1./3+y*1/sqt+color[2],-x*1./3-y*1./sqt+color[2]);
 }
 
 /**
@@ -50,7 +53,7 @@ int CImageToZBuffer(Vec3f v){
 /**
  * Draw a line between (x0,y0) and (x1,y1). Who could've guessed.
  */
-void line(Vec2i p0, Vec2i p1, Image *image, Vec3f color){
+void line(Vec2i p0, Vec2i p1, TGAImage *image, TGAColor color){
   int xFor = true;
   int x0=p0.x,y0=p0.y;
   int x1=p1.x,y1=p1.y;
@@ -68,22 +71,22 @@ void line(Vec2i p0, Vec2i p1, Image *image, Vec3f color){
     int y = y0 + (y1-y0)*t;
     //De-transpose if steep
     if(xFor){
-      image->setPixel(x,y,color);
+      image->set(x,y,color);
     } else {
-      image->setPixel(y,x,color);
+      image->set(y,x,color);
     }
   }
 }
 
-void line(Vec3f p0, Vec3f p1, Image *image, Vec3f color){
+void line(Vec3f p0, Vec3f p1, TGAImage *image, TGAColor color){
   line(Vec2i(p0.x,p0.y),Vec2i(p1.x,p1.y),image,color);
 }
 
 /**
  * Draw a triangle, filled with given color.
  */
-void bayesian_triangle(Triangle3f tri, Image *image, float *zbuffer, Vec3f color){
-  Vec2f bbox_clamp(image->width()-1.,image->height()-1.);
+void bayesian_triangle(Triangle3f tri, TGAImage *image, float *zbuffer, TGAColor color){
+  Vec2f bbox_clamp(image->get_width()-1.,image->get_height()-1.);
   Vec2f bbox_min(std::numeric_limits<float>::max(),std::numeric_limits<float>::max());
   Vec2f bbox_max(std::numeric_limits<float>::min(),std::numeric_limits<float>::min());
   for(int i=0 ; i < 3 ; i++){
@@ -101,14 +104,14 @@ void bayesian_triangle(Triangle3f tri, Image *image, float *zbuffer, Vec3f color
       for(int i=0;i<3;i++) { v.z += tri[i].z*bc[i]; }
       if(zbuffer[CImageToZBuffer(v)]<v.z){
 	zbuffer[CImageToZBuffer(v)]=v.z;
-	image->setPixel(v.x,v.y,color);
+	image->set(v.x,v.y,color);
       }
     }
   }
 }
 
 //DEPRECATED : Render a triangle using the old scanlines method.
-void scanlines_triangle(Vec2i p0, Vec2i p1, Vec2i p2, Image *image, Vec3f color){
+void scanlines_triangle(Vec2i p0, Vec2i p1, Vec2i p2, TGAImage *image, TGAColor color){
   if(p0.y==p1.y && p0.y==p2.y) return;
   if(p0.y > p1.y) std::swap(p0,p1);
   if(p0.y > p2.y) std::swap(p0,p2);
@@ -123,13 +126,13 @@ void scanlines_triangle(Vec2i p0, Vec2i p1, Vec2i p2, Image *image, Vec3f color)
     Vec2i B = (lowerHalf ? p0 + (p1-p0) * beta : p1 + (p2-p1) * beta);
     if(A.x>B.x) std::swap(A,B);
     for(int x=A.x;x<B.x;x++){
-      image->setPixel(x,p0.y+y,color);
+      image->set(x,p0.y+y,color);
     }
   }
 }
 
 //Render a triangle in wireframe.
-void wireframe(Triangle3f tri,Image *image, Vec3f color){
+void wireframe(Triangle3f tri,TGAImage *image, TGAColor color){
   line(tri.v0,tri.v1,image,color);
   line(tri.v1,tri.v2,image,color);
   line(tri.v0,tri.v2,image,color);
@@ -139,7 +142,7 @@ void wireframe(Triangle3f tri,Image *image, Vec3f color){
  * Rendering function.
  */
 void render() {
-  Image* framebuffer = new Image(width,height);
+  TGAImage* framebuffer = new TGAImage(width,height,3);
   float zbuffer[width*height];
   for(int i=0;i<width*height;i++){
     zbuffer[i]=std::numeric_limits<float>::min();
@@ -159,25 +162,28 @@ void render() {
     n.normalize();
     float intensity = n*light_dir;
     if(intensity<=0) continue;
-    Vec3f color = HSVToRGB(Vec3f(((rand()%255)/255.)*2.*pi,0.5+(rand()%16)/32.,0.25));
-    //color=Vec3f(intensity,intensity,intensity);
+    TGAColor color = TGAColor(255,255,255);
+    //TGAColor color = HSVToRGB(TGAColor(((rand()%255)/255.)*2.*pi,0.5+(rand()%16)/32.,0.25));
+    color=color*intensity;
     Triangle3f tri(screen_coords[0],screen_coords[1],screen_coords[2]);
     bayesian_triangle(tri,framebuffer,zbuffer,color);
     //wireframe(tri,framebuffer,Vec3f(0.66,0.13,0.45));
   }
 
   //Print z-buffer
-  Image* zbuffer_r = new Image(width,height);
+  TGAImage* zbuffer_r = new TGAImage(width,height,3);
   for(int y=0 ; y < height ; y ++){
     for(int x=0 ; x < width ; x ++){
-      float c = zbuffer[CImageToZBuffer(x,y)];
-      zbuffer_r->setPixel(x,y,Vec3f(c,c,c));
+      float c = zbuffer[CImageToZBuffer(x,y)]*255;
+      zbuffer_r->set(x,y,TGAColor(c,c,c));
     }
   }
   
   //Save the images
-  framebuffer->saveAsPPM("out.ppm");
-  zbuffer_r->saveAsPPM("z.ppm");
+  framebuffer->flip_vertically();
+  zbuffer_r->flip_vertically();
+  framebuffer->write_tga_file("out.tga",0);
+  zbuffer_r->write_tga_file("z.tga",0);
 
   delete model;
   delete framebuffer;

@@ -5,7 +5,7 @@ _Created by Alison Théo (Thelias), Alexis Cesaro (AlexisDevMaster)_
 
 The repository comes with two handy script files ; **rebuild_cmake** creates the build directory, executes CMake and drops the results inside. But if you want to go faster, executing **autobuild.sh** builds the project, executes it (by default on diablo3_pose) and then displays both the anaglyphed render and the red part's zbuffer.
 
-You can also add an argument to **autobuild.sh** ; the program will look for <arg>.obj and <arg>_diffuse.tga to render whatever model you may have.
+You can also add an argument to **autobuild.sh** ; the program will look for \<arg>.obj and\<arg>\_diffuse.tga to render whatever model you may have.
 
 ## What to expect
 

@@ -29,6 +29,14 @@ TGAColor HSVToRGB(TGAColor color){
   return TGAColor(x*2./3+color[2],-x*1./3+y*1/sqt+color[2],-x*1./3-y*1./sqt+color[2]);
 }
 
+TGAColor multiplyColors(TGAColor base, TGAColor light){
+  return TGAColor(base[2]*light[2]/255,base[1]*light[1]/255,base[0]*light[0]/255);
+}
+
+TGAColor addColors(TGAColor base, TGAColor add){
+  return TGAColor(base[0]+add[0],base[1]+add[1],base[2]+add[2]);
+}
+
 /**
  * Transform .obj coordinates [-1,1] into discrete image coordinates [0,width|height]
  */
@@ -120,7 +128,7 @@ void bayesian_triangle(TexturedTriangle triangle, TGAImage *image, float *zbuffe
       if(zbuffer[CImageToZBuffer(v)]<v.z){
 	zbuffer[CImageToZBuffer(v)]=v.z;
 	Vec2f ratios = Vec2f(tex.v0.x*bc[0]+tex.v1.x*bc[1]+tex.v2.x*bc[2],tex.v0.y*bc[0]+tex.v1.y*bc[1]+tex.v2.y*bc[2]);
-	image->set(v.x,v.y,model->getDiffuseAt(ratios)*(color[0]/255.));
+	image->set(v.x,v.y,multiplyColors(model->getDiffuseAt(ratios),color));
       }
     }
   }
@@ -185,57 +193,65 @@ Matrix createViewport(int x, int y, int w, int h){
  * Rendering function.
  */
 void render() {
-  TGAImage* framebuffer = new TGAImage(width,height,3);
-  float zbuffer[width*height];
-  for(int i=0;i<width*height;i++){
-    zbuffer[i]=std::numeric_limits<float>::min();
-  }
+  TGAImage* framebuffer[3];
+  framebuffer[0] = new TGAImage(width,height,1);
+  framebuffer[1] = new TGAImage(width,height,1);
+  framebuffer[2] = new TGAImage(width,height,3);
   Vec3f light_dir(0,0,-1);
-  Matrix projection = Matrix::identity(4);
-  //projection[3][2] = -1./3; //Place the camera at (0,0,-3)
-  Matrix viewport = createViewport(width/8,height/8,width*3/4,height*3/4);
+  /*Matrix projection = Matrix::identity(4);
+  projection[3][2] = -1./3; //Place the camera at (0,0,-3)
+  Matrix viewport = createViewport(width/8,height/8,width*3/4,height*3/4); cant make it work*/
+  float zbuffer[2][width*height];
+  for(int i=0;i<width*height;i++){
+    zbuffer[0][i]=std::numeric_limits<float>::min();
+    zbuffer[1][i]=std::numeric_limits<float>::min();
+  }
   //Render the model
   for(int f=0;f<model->nfaces();f++){
     FaceData face = model->getFaceData(f);
-    Vec3f screen_coords[3];
-    Vec3f world_coords[3];
+    Vec3f screen_coords[2][3];
+    Vec3f world_coords[2][3];
     Vec2f tex_coords[3];
     for(int i=0;i<3;i++){
       Vec3f v = model->getVertex(face.vertices[i]);
-      std::cout << vectorToMatrix(v) << std::endl << projection*vectorToMatrix(v) << std::endl;
-      screen_coords[i] = matrixToVector(viewport*projection*vectorToMatrix(v));
-      std::cout << screen_coords[i] << std::endl << std::endl;
-      //screen_coords[i] = CObjToImage(v);
-      world_coords[i]=v;
+      Vec3f u = model->getVertex(face.vertices[i]);
+      u.x-=0.1;//-(0.05*(u.z+1./2.)); //Closest vertices move more than farther away ones
+      //screen_coords[i] = matrixToVector(viewport*projection*vectorToMatrix(v)); not working yay
+      screen_coords[0][i] = CObjToImage(v);
+      screen_coords[1][i] = CObjToImage(u);
+      world_coords[0][i]=v;
+      world_coords[1][i]=u;
       tex_coords[i] = model->getTextureVertex(face.texture_vertices[i]);
     }
-    Vec3f n = cross(world_coords[2]-world_coords[0],world_coords[1]-world_coords[0]);
-    n.normalize();
-    float intensity = n*light_dir;
-    if(intensity<=0) continue;
-    TGAColor color = TGAColor(255,255,255);
-    color=color*intensity;
-    TexturedTriangle tri(Triangle3f(screen_coords[0],screen_coords[1],screen_coords[2]),Triangle2f(tex_coords[0],tex_coords[1],tex_coords[2]));
-    bayesian_triangle(tri,framebuffer,zbuffer,color);
+    for(int i = 0 ; i < 2 ; i ++) {
+      Vec3f n;
+      n=cross(world_coords[i][2]-world_coords[i][0],world_coords[i][1]-world_coords[i][0]);
+      n.normalize();
+      float intensity = n*light_dir;
+      if(intensity<=0) continue;
+      TexturedTriangle tri(Triangle3f(screen_coords[i][0],screen_coords[i][1],screen_coords[i][2]),Triangle2f(tex_coords[0],tex_coords[1],tex_coords[2]));
+      TGAColor color=TGAColor(255,255,255)*intensity;
+      bayesian_triangle(tri,framebuffer[i],zbuffer[i],color);
+    }
   }
 
-  //Print z-buffer
-  TGAImage* zbuffer_r = new TGAImage(width,height,3);
-  for(int y=0 ; y < height ; y ++){
-    for(int x=0 ; x < width ; x ++){
-      float c = zbuffer[CImageToZBuffer(x,y)]*255;
-      zbuffer_r->set(x,y,TGAColor(c,c,c));
+  //Dump z-buffer and combine renders
+  TGAImage *zbuffer_r = new TGAImage(width,height,3);
+  for(int i = 0 ; i < width ; i++){
+    for(int j = 0 ; j < height ; j++){
+      zbuffer_r->set(i,j,TGAColor(255,255,255)*zbuffer[0][CImageToZBuffer(i,j)]);
+      TGAColor color = TGAColor(framebuffer[0]->get(i,j)[0]*2,0,framebuffer[1]->get(i,j)[0]*2);
+      framebuffer[2]->set(i,j,color);
     }
   }
   
   //Save the images
-  framebuffer->flip_vertically();
+  framebuffer[2]->flip_vertically();
   zbuffer_r->flip_vertically();
-  framebuffer->write_tga_file("out.tga",0);
+  framebuffer[2]->write_tga_file("out.tga",0);
   zbuffer_r->write_tga_file("z.tga",0);
-
+  
   delete model;
-  delete framebuffer;
 }
 
 int main(int argc, char* argv[]) {

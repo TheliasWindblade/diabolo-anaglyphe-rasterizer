@@ -94,6 +94,7 @@ private:
 };
 
 typedef polygon<3,Vec2i> Triangle2i;
+typedef polygon<3,Vec2f> Triangle2f;
 typedef polygon<3,Vec3f> Triangle3f;
 
 template <typename K> struct polygon<3,K> {
@@ -107,6 +108,12 @@ template <typename K> struct polygon<3,K> {
     return Vec3f(1.f-(c.x+c.y)/c.z,c.y/c.z,c.x/c.z);
   }
   K v0,v1,v2;
+};
+
+struct TexturedTriangle{
+  TexturedTriangle(Triangle3f wV, Triangle2f tV) : worldVertices(wV), textureVertices(tV) {} 
+  Triangle3f worldVertices;
+  Triangle2f textureVertices;
 };
 
 #endif

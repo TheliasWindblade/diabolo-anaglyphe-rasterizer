@@ -38,6 +38,18 @@ Vec3f CObjToImage(Vec3f v){
   return Vec3f(x0,y0,z0);
 }
 
+Vec2f CObjToImage(Vec2f v){
+  int x0 = ((v.x+1.)*width/2.+.5);
+  int y0 = ((v.y+1.)*height/2.+.5);
+  return Vec2f(x0,y0);
+}
+
+Vec2f CObjToImage(Vec2f v, Vec2i clamp){
+  int x0 = ((v.x+1.)*clamp.x/2.+.5);
+  int y0 = ((v.y+1.)*clamp.y/2.+.5);
+  return Vec2f(x0,y0);
+}
+
 /**
  * Convert 2D image coordinates[0,width|height] to 1D framebuffer coordinates [0,width*height]
  */
@@ -85,7 +97,9 @@ void line(Vec3f p0, Vec3f p1, TGAImage *image, TGAColor color){
 /**
  * Draw a triangle, filled with given color.
  */
-void bayesian_triangle(Triangle3f tri, TGAImage *image, float *zbuffer, TGAColor color){
+void bayesian_triangle(TexturedTriangle triangle, TGAImage *image, float *zbuffer, TGAColor color){
+  Triangle3f tri = triangle.worldVertices;
+  Triangle2f tex = triangle.textureVertices;
   Vec2f bbox_clamp(image->get_width()-1.,image->get_height()-1.);
   Vec2f bbox_min(std::numeric_limits<float>::max(),std::numeric_limits<float>::max());
   Vec2f bbox_max(std::numeric_limits<float>::min(),std::numeric_limits<float>::min());
@@ -104,7 +118,8 @@ void bayesian_triangle(Triangle3f tri, TGAImage *image, float *zbuffer, TGAColor
       for(int i=0;i<3;i++) { v.z += tri[i].z*bc[i]; }
       if(zbuffer[CImageToZBuffer(v)]<v.z){
 	zbuffer[CImageToZBuffer(v)]=v.z;
-	image->set(v.x,v.y,color);
+	Vec2f ratios = Vec2f(tex.v0.x*bc[0]+tex.v1.x*bc[1]+tex.v2.x*bc[2],tex.v0.y*bc[0]+tex.v1.y*bc[1]+tex.v2.y*bc[2]);
+	image->set(v.x,v.y,model->getDiffuseAt(ratios)*(color[0]/255.));
       }
     }
   }
@@ -153,10 +168,12 @@ void render() {
     FaceData face = model->getFaceData(f);
     Vec3f screen_coords[3];
     Vec3f world_coords[3];
+    Vec2f tex_coords[3];
     for(int i=0;i<3;i++){
       Vec3f v = model->getVertex(face.vertices[i]);
       screen_coords[i] = CObjToImage(v);
       world_coords[i]=v;
+      tex_coords[i] = model->getTextureVertex(face.texture_vertices[i]);
     }
     Vec3f n = cross(world_coords[2]-world_coords[0],world_coords[1]-world_coords[0]);
     n.normalize();
@@ -165,7 +182,7 @@ void render() {
     TGAColor color = TGAColor(255,255,255);
     //TGAColor color = HSVToRGB(TGAColor(((rand()%255)/255.)*2.*pi,0.5+(rand()%16)/32.,0.25));
     color=color*intensity;
-    Triangle3f tri(screen_coords[0],screen_coords[1],screen_coords[2]);
+    TexturedTriangle tri(Triangle3f(screen_coords[0],screen_coords[1],screen_coords[2]),Triangle2f(tex_coords[0],tex_coords[1],tex_coords[2]));
     bayesian_triangle(tri,framebuffer,zbuffer,color);
     //wireframe(tri,framebuffer,Vec3f(0.66,0.13,0.45));
   }

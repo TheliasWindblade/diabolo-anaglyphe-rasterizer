@@ -22,8 +22,9 @@ public:
   int nfaces();
   Vec3f getVertex(int id);
   Vec2f getTextureVertex(int id);
+  TGAColor getDiffuseAt(Vec2f uvf);
   FaceData getFaceData(int id);
-  //void print();
+  Vec2i getTextureSize();
 private:
   std::vector<Vec3f> vertices_;
   std::vector<Vec2f> texture_vertices_;

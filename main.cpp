@@ -150,11 +150,11 @@ void render() {
   Vec3f light_dir(0,0,-1);
   //Render the model
   for(int f=0;f<model->nfaces();f++){
-    std::vector<int> face = model->getFaceVertexes(f);
+    FaceData face = model->getFaceData(f);
     Vec3f screen_coords[3];
     Vec3f world_coords[3];
     for(int i=0;i<3;i++){
-      Vec3f v = model->getVertex(face[i]);
+      Vec3f v = model->getVertex(face.vertices[i]);
       screen_coords[i] = CObjToImage(v);
       world_coords[i]=v;
     }
@@ -193,7 +193,7 @@ int main(int argc, char* argv[]) {
   if(argc==2){
     model = new Model(argv[1]);
   } else {
-    model = new Model("./obj/diablo3_pose.obj");
+    model = new Model("diablo3_pose");
   }
   render();
   return 0;

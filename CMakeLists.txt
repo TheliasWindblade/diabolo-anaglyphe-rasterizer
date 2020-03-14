@@ -23,7 +23,7 @@ enable_cxx_compiler_flag_if_supported("-fopenmp")
 enable_cxx_compiler_flag_if_supported("-g")
 
 file(GLOB SOURCES *.h *.cpp)
-file(GLOB OBJECTS *.obj)
+file(GLOB OBJECTS *.obj *_diffuse.tga)
 file(COPY ${OBJECTS} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/obj)
 
 add_executable(${PROJECT_NAME} ${SOURCES})

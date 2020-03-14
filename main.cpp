@@ -15,6 +15,7 @@
 
 const int   width    = 800;
 const int   height   = 800;
+const int   depth    = 255;
 const float sqt = 1.73;
 const float pi = 3.14;
 Model* model=NULL;
@@ -153,6 +154,33 @@ void wireframe(Triangle3f tri,TGAImage *image, TGAColor color){
   line(tri.v0,tri.v2,image,color);
 }
 
+//Convert a 3D vector into a 4D matrix.
+Matrix vectorToMatrix(Vec3f vec){
+  Matrix m(1,4);
+  m[0][0]=vec.x;
+  m[1][0]=vec.y;
+  m[2][0]=vec.z;
+  m[3][0]=1.f;
+  return m;
+}
+
+//Convert a matrix back into a 3D vector.
+Vec3f matrixToVector(Matrix m){
+  return Vec3f(m[0][0]/m[3][0],m[1][0]/m[3][0],m[2][0]/m[3][0]);
+}
+
+//Create a viewport matrix at position (x,y), of size (w,h).
+Matrix createViewport(int x, int y, int w, int h){
+  Matrix m = Matrix::identity(4);
+  m[0][0] = w/2.;
+  m[0][3] = x+w/2.;
+  m[1][1] = h/2.;
+  m[1][3] = y+h/2.;
+  m[2][2] = depth/2.;
+  m[2][3] = depth/2.;
+  return m;
+}
+
 /**
  * Rendering function.
  */
@@ -163,6 +191,9 @@ void render() {
     zbuffer[i]=std::numeric_limits<float>::min();
   }
   Vec3f light_dir(0,0,-1);
+  Matrix projection = Matrix::identity(4);
+  //projection[3][2] = -1./3; //Place the camera at (0,0,-3)
+  Matrix viewport = createViewport(width/8,height/8,width*3/4,height*3/4);
   //Render the model
   for(int f=0;f<model->nfaces();f++){
     FaceData face = model->getFaceData(f);
@@ -171,7 +202,10 @@ void render() {
     Vec2f tex_coords[3];
     for(int i=0;i<3;i++){
       Vec3f v = model->getVertex(face.vertices[i]);
-      screen_coords[i] = CObjToImage(v);
+      std::cout << vectorToMatrix(v) << std::endl << projection*vectorToMatrix(v) << std::endl;
+      screen_coords[i] = matrixToVector(viewport*projection*vectorToMatrix(v));
+      std::cout << screen_coords[i] << std::endl << std::endl;
+      //screen_coords[i] = CObjToImage(v);
       world_coords[i]=v;
       tex_coords[i] = model->getTextureVertex(face.texture_vertices[i]);
     }
@@ -180,11 +214,9 @@ void render() {
     float intensity = n*light_dir;
     if(intensity<=0) continue;
     TGAColor color = TGAColor(255,255,255);
-    //TGAColor color = HSVToRGB(TGAColor(((rand()%255)/255.)*2.*pi,0.5+(rand()%16)/32.,0.25));
     color=color*intensity;
     TexturedTriangle tri(Triangle3f(screen_coords[0],screen_coords[1],screen_coords[2]),Triangle2f(tex_coords[0],tex_coords[1],tex_coords[2]));
     bayesian_triangle(tri,framebuffer,zbuffer,color);
-    //wireframe(tri,framebuffer,Vec3f(0.66,0.13,0.45));
   }
 
   //Print z-buffer

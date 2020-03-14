@@ -116,4 +116,26 @@ struct TexturedTriangle{
   Triangle2f textureVertices;
 };
 
+
+// Matrices definition.
+
+const int DEF_DIM=4;
+
+class Matrix{
+  
+public:
+  Matrix(int w=DEF_DIM, int h=DEF_DIM);
+  static Matrix identity(int DIM=DEF_DIM);
+  Matrix transpose();
+  Matrix inverse();
+  int get_width() const;
+  int get_height() const;
+  Matrix operator*(const Matrix& m);
+  std::vector<float>& operator[](const int i);
+  friend std::ostream& operator<<(std::ostream& s, const Matrix &m);
+private:
+  int width_,height_;
+  std::vector<std::vector<float>> m_;
+};
+
 #endif
